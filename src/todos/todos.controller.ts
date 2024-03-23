@@ -13,7 +13,8 @@ export class TodosController {
   }
 
   @Get()
-  findAll() {
+  async findAll() {
+    
     return this.todosService.findAll();
   }
 
