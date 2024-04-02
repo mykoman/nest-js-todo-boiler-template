@@ -1,33 +1,44 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from 'node_modules/@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from 'node_modules/@nestjs/typeorm';
+import { Repository } from 'node_modules/typeorm';
 import { Todo } from './entities/todo.entity';
 
 @Injectable()
 export class TodosService {
-  constructor(@InjectRepository(Todo)
-  private readonly todoRepository: Repository<Todo>){}
+  constructor(
+    @InjectRepository(Todo)
+    private readonly todoRepository: Repository<Todo>,
+  ) {}
 
   async create(createTodoDto: CreateTodoDto): Promise<Todo> {
-    return await this.todoRepository.save(createTodoDto)
+    return await this.todoRepository.save(createTodoDto);
   }
 
-  async findAll(): Promise<Todo[]>  {
-     return await this.todoRepository.find()
+  async findAll(): Promise<Todo[]> {
+    return await this.todoRepository.find();
   }
 
   async findOne(id: number): Promise<Todo> {
-    return await this.todoRepository.findOne({where: {id: id}});
+    return await this.todoRepository.findOne({ where: { id: id } });
   }
 
   async update(id: number, updateTodoDto: UpdateTodoDto) {
-    //const todo = await this.todoRepository.update(updateTodoDto)
-    return `This action updates a #${id} todo`;
+    const todoItem = await this.todoRepository.findOne({ where: { id } });
+    if (!todoItem) {
+      throw new NotFoundException(`Todo with id ${id} not found`);
+    }
+    // the validation configuration is whitelisted so no unwanted inputs
+    const updatedValues = { ...todoItem, ...updateTodoDto };
+    return await this.todoRepository.save(updatedValues);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} todo`;
+  async remove(id: number) {
+    const todoItem = await this.todoRepository.findOne({ where: { id } });
+    if (!todoItem) {
+      throw new NotFoundException(`Todo with id ${id} is not found`);
+    }
+    return await this.todoRepository.remove(todoItem);
   }
 }
