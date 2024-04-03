@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { TodosService } from './todos.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
@@ -13,9 +22,8 @@ export class TodosController {
   }
 
   @Get()
-  async findAll() {
-    
-    return this.todosService.findAll();
+  async findAll(@Query() queryParams: {}) {
+    return this.todosService.findAll(queryParams);
   }
 
   @Get(':id')

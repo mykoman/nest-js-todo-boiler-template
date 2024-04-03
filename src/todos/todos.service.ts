@@ -16,8 +16,15 @@ export class TodosService {
     return await this.todoRepository.save(createTodoDto);
   }
 
-  async findAll(): Promise<Todo[]> {
-    return await this.todoRepository.find();
+  async findAll(params): Promise<Todo[]> {
+    const { page = 1, limit = 10, isCompleted } = params;
+    const skip = (page - 1) * limit;
+    console.log({ skip, page, isCompleted });
+    return await this.todoRepository.find({
+      skip,
+      take: limit,
+      where: { isCompleted },
+    });
   }
 
   async findOne(id: number): Promise<Todo> {
