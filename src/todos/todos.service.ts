@@ -4,6 +4,7 @@ import { UpdateTodoDto } from './dto/update-todo.dto';
 import { InjectRepository } from 'node_modules/@nestjs/typeorm';
 import { Repository } from 'node_modules/typeorm';
 import { Todo } from './entities/todo.entity';
+import { SuccessResponse } from 'src/helpers/success-response/success-response';
 
 @Injectable()
 export class TodosService {
@@ -12,23 +13,38 @@ export class TodosService {
     private readonly todoRepository: Repository<Todo>,
   ) {}
 
-  async create(createTodoDto: CreateTodoDto): Promise<Todo> {
-    return await this.todoRepository.save(createTodoDto);
+  async create(createTodoDto: CreateTodoDto) {
+    const todo = await this.todoRepository.save(createTodoDto);
+    return new SuccessResponse({ message: 'Successfully created', data: todo });
   }
 
-  async findAll(params): Promise<Todo[]> {
+  async findAll(params) {
     const { page = 1, limit = 10, isCompleted } = params;
     const skip = (page - 1) * limit;
     console.log({ skip, page, isCompleted });
-    return await this.todoRepository.find({
+    const [data, totalCount] = await this.todoRepository.findAndCount({
       skip,
       take: limit,
       where: { isCompleted },
     });
+    const pagination = {
+      totalCount,
+      page,
+      perPage: limit,
+      totalPages: Math.ceil(totalCount / limit),
+    };
+    return new SuccessResponse({ data, pagination });
   }
 
-  async findOne(id: number): Promise<Todo> {
-    return await this.todoRepository.findOne({ where: { id: id } });
+  async findOne(id: number) {
+    const todo = await this.todoRepository.findOne({ where: { id: id } });
+    if (!todo) {
+      throw new NotFoundException(`Todo with id ${id} not found`);
+    }
+    return new SuccessResponse({
+      data: todo,
+      message: 'Todo item successfully fetched',
+    });
   }
 
   async update(id: number, updateTodoDto: UpdateTodoDto) {
@@ -38,7 +54,9 @@ export class TodosService {
     }
     // the validation configuration is whitelisted so no unwanted inputs
     const updatedValues = { ...todoItem, ...updateTodoDto };
-    return await this.todoRepository.save(updatedValues);
+
+    const savedData = await this.todoRepository.save(updatedValues);
+    return new SuccessResponse({ data: savedData });
   }
 
   async remove(id: number) {
@@ -46,6 +64,7 @@ export class TodosService {
     if (!todoItem) {
       throw new NotFoundException(`Todo with id ${id} is not found`);
     }
-    return await this.todoRepository.remove(todoItem);
+    await this.todoRepository.remove(todoItem);
+    return new SuccessResponse({ message: `Removed todo with id: ${id}` });
   }
 }
