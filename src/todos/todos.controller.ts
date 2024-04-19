@@ -11,11 +11,18 @@ import {
 import { TodosService } from './todos.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
+import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import { Todo } from './entities/todo.entity';
 
+@ApiTags('todos')
 @Controller('todos')
 export class TodosController {
   constructor(private readonly todosService: TodosService) {}
 
+  @ApiCreatedResponse({
+    description: 'The record has been successfully created.',
+    type: Todo,
+  })
   @Post()
   create(@Body() createTodoDto: CreateTodoDto) {
     return this.todosService.create(createTodoDto);
